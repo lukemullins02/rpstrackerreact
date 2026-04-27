@@ -11,7 +11,8 @@ import {
 } from "../../../../core/constants";
 import { Observable } from "rxjs";
 import { AssigneeListModal } from "../assignee-list-modal/assignee-list-modal";
-import { DropDownList } from "@progress/kendo-react-dropdowns";
+import { DropDownList, ListItemProps } from "@progress/kendo-react-dropdowns";
+import { getIndicatorClass } from "../../../../shared/helpers/priority-styling";
 
 interface PtItemDetailsComponentProps {
   item: PtItem;
@@ -94,6 +95,33 @@ export function PtItemDetailsComponent(props: PtItemDetailsComponentProps) {
     notifyUpdateItem();
   }
 
+  function itemTypeRender(li: any, itemProps: ListItemProps) {
+    const dataItem = itemProps.dataItem;
+
+    const itemTypeRow = (
+      <>
+        <img
+          src={ItemType.imageResFromType(dataItem)}
+          className="backlog-icon"
+          alt={dataItem}
+        />
+        <span>{dataItem}</span>
+      </>
+    );
+
+    return React.cloneElement(li, li.props, itemTypeRow);
+  }
+
+  function priorityRender(li: any, itemProps: ListItemProps) {
+    const dataItem = itemProps.dataItem;
+
+    const priorityRow = (
+      <span className={"badge " + getIndicatorClass(dataItem)}>{dataItem}</span>
+    );
+
+    return React.cloneElement(li, li.props, priorityRow);
+  }
+
   if (!itemForm) {
     return null;
   }
@@ -130,20 +158,14 @@ export function PtItemDetailsComponent(props: PtItemDetailsComponentProps) {
         <div className="form-group row">
           <label className="col-sm-2 col-form-label">Item Type</label>
           <div className="col-sm-10">
-            <select
+            <DropDownList
               className="form-control"
+              data={itemTypesProvider}
+              itemRender={(li, props) => itemTypeRender(li, props)}
               defaultValue={itemForm.typeStr}
               onChange={(e) => onNonTextFieldChange(e, "typeStr")}
               name="itemType"
-            >
-              {itemTypesProvider.map((t) => {
-                return (
-                  <option key={t} value={t}>
-                    {t}
-                  </option>
-                );
-              })}
-            </select>
+            ></DropDownList>
           </div>
         </div>
 
@@ -178,20 +200,13 @@ export function PtItemDetailsComponent(props: PtItemDetailsComponentProps) {
         <div className="form-group row">
           <label className="col-sm-2 col-form-label">Priority</label>
           <div className="col-sm-10">
-            <select
-              className="form-control"
+            <DropDownList
+              data={prioritiesProvider}
+              itemRender={(li, props) => priorityRender(li, props)}
               defaultValue={itemForm.priorityStr}
               onChange={(e) => onNonTextFieldChange(e, "priorityStr")}
               name="priority"
-            >
-              {prioritiesProvider.map((t) => {
-                return (
-                  <option key={t} value={t}>
-                    {t}
-                  </option>
-                );
-              })}
-            </select>
+            ></DropDownList>
           </div>
         </div>
 
