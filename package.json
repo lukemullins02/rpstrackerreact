@@ -6,6 +6,7 @@
     "@progress/kendo-react-buttons": "^14.4.0",
     "@progress/kendo-react-dropdowns": "^14.4.0",
     "@progress/kendo-react-inputs": "^14.4.0",
+    "@progress/kendo-react-layout": "^14.4.0",
     "@progress/kendo-theme-default": "^13.1.1",
     "bootstrap": "4.6.0",
     "react": "18.2.0",

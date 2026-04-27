@@ -1,13 +1,19 @@
-import { useContext, useState } from "react";
+import { cloneElement, useContext, useState } from "react";
 import { useQuery } from "react-query";
-
+import { Observable } from "rxjs";
 import { DashboardFilter } from "../../repositories/dashboard.repository";
 import { formatDateEnUs } from "../../../../core/helpers/date-utils";
 import { ActiveIssuesComponent } from "../../components/active-issues/active-issues";
 import { StatusCounts } from "../../models";
-import { PtDashboardServiceContext } from "../../../../App";
+import { PtUser } from "../../../../core/models/domain";
+import {
+  PtDashboardServiceContext,
+  PtStoreContext,
+  PtUserServiceContext,
+} from "../../../../App";
 import { Button, ButtonGroup } from "@progress/kendo-react-buttons";
 import "@progress/kendo-theme-default/dist/all.css";
+import { ComboBox, ComboBoxChangeEvent } from "@progress/kendo-react-dropdowns";
 
 type DateRange = {
   dateStart: Date;
@@ -15,13 +21,19 @@ type DateRange = {
 };
 
 export function DashboardPage() {
+  const store = useContext(PtStoreContext);
+  const userService = useContext(PtUserServiceContext);
   const dashboardService = useContext(PtDashboardServiceContext);
 
   const [filter, setFilter] = useState<DashboardFilter>({});
+  const [selectedUser, setSelectedUser] = useState<PtUser | null>(null);
 
   function getQueryKey() {
     return ["items", filter];
   }
+
+  const users$: Observable<PtUser[]> = store.select<PtUser[]>("users");
+  const [users, setUsers] = useState<PtUser[]>([]);
 
   const useStatusCounts = (
     ...params: Parameters<typeof dashboardService.getStatusCounts>
@@ -52,12 +64,52 @@ export function DashboardPage() {
     };
   }
 
+  function userFilterOpen() {
+    users$.subscribe((uList: PtUser[]) => {
+      if (uList.length > 0) {
+        setUsers(uList);
+      }
+    });
+    userService.fetchUsers();
+  }
+
+  function userFilterValueChange(e: ComboBoxChangeEvent) {
+    const user = e.target.value;
+    if (user) {
+      setSelectedUser(user);
+      setFilter({ ...filter, userId: user.id });
+    } else {
+      setSelectedUser(null);
+      setFilter({ ...filter, userId: undefined });
+    }
+  }
+
   if (queryResult.isLoading) {
     return <div>Loading...</div>;
   }
 
   if (!statusCounts) {
     return <div>No data</div>;
+  }
+
+  function filterItemRender(li: any, itemProps: any) {
+    const userItem = itemProps.dataItem as PtUser;
+    const renderedRow = (
+      <div className="row align-items-center">
+        <div className="col-auto">
+          <img
+            className="li-avatar rounded"
+            src={userItem.avatar}
+            alt="avatar"
+          />
+        </div>
+        <div className="col-auto">
+          <span>{userItem.fullName}</span>
+        </div>
+      </div>
+    );
+
+    return cloneElement(li, li.props, renderedRow);
   }
 
   return (
@@ -80,6 +132,19 @@ export function DashboardPage() {
 
         <div className="btn-toolbar mb-2 mb-md-0" style={{ gap: 20 }}>
           <div className="btn-group mr-2">
+            <div className="btn-group mr-2">
+              <ComboBox
+                onOpen={userFilterOpen}
+                onChange={userFilterValueChange}
+                value={selectedUser}
+                textField="fullName"
+                dataItemKey="id"
+                itemRender={filterItemRender}
+                style={{ width: 250 }}
+                data={users}
+              ></ComboBox>
+            </div>
+
             <ButtonGroup>
               <Button
                 className="btn btn-sm btn-outline-secondary"
