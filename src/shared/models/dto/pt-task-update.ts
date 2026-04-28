@@ -1,6 +1,18 @@
-import { PtTask } from '../../../core/models/domain';
+import { PtTask } from "../../../core/models/domain";
 
-export type PtTaskTitleUpdate = {
-    task: PtTask;
-    newTitle: string;
-}
+type PtTaskCommonUpdate = {
+  task: PtTask;
+};
+
+export type PtTaskTitleUpdate = PtTaskCommonUpdate & {
+  newTitle: string;
+};
+
+export type PtTaskDatesUpdate = PtTaskCommonUpdate & {
+  dateStart: Date;
+  dateEnd: Date;
+};
+
+export type PtTaskAllUpdate = PtTaskCommonUpdate &
+  PtTaskTitleUpdate &
+  PtTaskDatesUpdate;

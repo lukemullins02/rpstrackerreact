@@ -19,6 +19,7 @@ import {
   PtUserServiceContext,
 } from "../../../../App";
 import { TabStrip, TabStripTab } from "@progress/kendo-react-layout";
+import { PtItemScheduleComponent } from "../../components/item-schedule/pt-item-schedule";
 
 const queryTag = "item";
 
@@ -214,6 +215,14 @@ export function DetailPage() {
             addTaskMutation={addTaskMutation}
             deleteTaskMutation={deleteTaskMutation}
             toggleTaskCompletionMutation={toggleTaskCompletionMutation}
+            updateTaskMutation={updateTaskMutation}
+          />
+        </TabStripTab>
+        <TabStripTab title="Schedule">
+          <PtItemScheduleComponent
+            tasks={item.tasks}
+            addTaskMutation={addTaskMutation}
+            deleteTaskMutation={deleteTaskMutation}
             updateTaskMutation={updateTaskMutation}
           />
         </TabStripTab>
