@@ -1,7 +1,10 @@
 import { cloneElement, useContext, useState } from "react";
-import { useQuery } from "react-query";
+import { useQueries } from "react-query";
 import { Observable } from "rxjs";
-import { DashboardFilter } from "../../repositories/dashboard.repository";
+import {
+  DashboardFilter,
+  FilteredIssues,
+} from "../../repositories/dashboard.repository";
 import { formatDateEnUs } from "../../../../core/helpers/date-utils";
 import { ActiveIssuesComponent } from "../../components/active-issues/active-issues";
 import { StatusCounts } from "../../models";
@@ -14,6 +17,7 @@ import {
 import { Button, ButtonGroup } from "@progress/kendo-react-buttons";
 import "@progress/kendo-theme-default/dist/all.css";
 import { ComboBox, ComboBoxChangeEvent } from "@progress/kendo-react-dropdowns";
+import { DashboardChart } from "../../components/active-issues/dashboard-chart";
 
 type DateRange = {
   dateStart: Date;
@@ -28,22 +32,32 @@ export function DashboardPage() {
   const [filter, setFilter] = useState<DashboardFilter>({});
   const [selectedUser, setSelectedUser] = useState<PtUser | null>(null);
 
-  function getQueryKey() {
-    return ["items", filter];
+  function getQueryKey(keybase: string) {
+    return [keybase, filter];
   }
 
   const users$: Observable<PtUser[]> = store.select<PtUser[]>("users");
   const [users, setUsers] = useState<PtUser[]>([]);
 
-  const useStatusCounts = (
-    ...params: Parameters<typeof dashboardService.getStatusCounts>
-  ) => {
-    return useQuery<StatusCounts, Error>(getQueryKey(), () =>
-      dashboardService.getStatusCounts(...params),
-    );
+  const useDashboardData = (filter: DashboardFilter) => {
+    return useQueries<[StatusCounts, FilteredIssues]>([
+      {
+        queryKey: getQueryKey("items"),
+        queryFn: () => dashboardService.getStatusCounts(filter),
+      },
+      {
+        queryKey: getQueryKey("issues"),
+        queryFn: () => dashboardService.getFilteredIssues(filter),
+      },
+    ]);
   };
-  const queryResult = useStatusCounts(filter);
-  const statusCounts = queryResult.data;
+
+  const queryResult = useDashboardData(filter);
+  const queryResult0 = queryResult[0];
+  const queryResult1 = queryResult[1];
+
+  const statusCounts = queryResult0?.data as StatusCounts | undefined;
+  const filteredIssues = queryResult1?.data as FilteredIssues;
 
   function onMonthRangeTap(months: number) {
     const range = getDateRange(months);
@@ -82,10 +96,6 @@ export function DashboardPage() {
       setSelectedUser(null);
       setFilter({ ...filter, userId: undefined });
     }
-  }
-
-  if (queryResult.isLoading) {
-    return <div>Loading...</div>;
   }
 
   if (!statusCounts) {
@@ -178,6 +188,11 @@ export function DashboardPage() {
             <div className="col-sm-12">
               <h3>All issues</h3>
             </div>
+          </div>
+        </div>
+        <div className="row">
+          <div className="col-sm-12">
+            {filteredIssues && <DashboardChart issuesAll={filteredIssues} />}
           </div>
         </div>
       </div>
